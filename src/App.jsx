@@ -1,12 +1,21 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import TaskInput from './components/TaskInput';
 import TaskStats from './components/TaskStats';
+import TaskFilters from './components/TaskFilters';
 import TaskList from './components/TaskList';
+import { loadTasksFromStorage, saveTasksToStorage } from './utils/storage';
 import './App.css';
 
 export default function App() {
-  const [tasks, setTasks] = useState([]);
+  // Initialize tasks directly from localStorage
+  const [tasks, setTasks] = useState(() => loadTasksFromStorage());
+  const [filter, setFilter] = useState('all');
+
+  // Synchronize tasks to localStorage whenever tasks state changes
+  useEffect(() => {
+    saveTasksToStorage(tasks);
+  }, [tasks]);
 
   // Handler: Add Task
   const handleAddTask = (text) => {
@@ -19,7 +28,7 @@ export default function App() {
     setTasks((prev) => [newTask, ...prev]);
   };
 
-  // Handler: Toggle Task completion status
+  // Handler: Toggle Task completion
   const handleToggleTask = (taskId) => {
     setTasks((prev) =>
       prev.map((task) =>
@@ -28,7 +37,7 @@ export default function App() {
     );
   };
 
-  // Handler: Edit Task text
+  // Handler: Edit Task
   const handleEditTask = (taskId, newText) => {
     setTasks((prev) =>
       prev.map((task) =>
@@ -42,30 +51,56 @@ export default function App() {
     setTasks((prev) => prev.filter((task) => task.id !== taskId));
   };
 
+  // Handler: Clear All Completed Tasks
+  const handleClearCompleted = () => {
+    setTasks((prev) => prev.filter((task) => !task.completed));
+  };
+
+  // Counts & Statistics calculation
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.completed).length;
   const activeTasks = totalTasks - completedTasks;
+
+  // Filtered tasks display
+  const filteredTasks = tasks.filter((task) => {
+    if (filter === 'active') return !task.completed;
+    if (filter === 'completed') return task.completed;
+    return true; // 'all'
+  });
 
   return (
     <div className="app-wrapper">
       <main className="app-container">
         <Header totalCount={totalTasks} completedCount={completedTasks} />
+        
         <TaskInput onAddTask={handleAddTask} />
+        
         <TaskStats
           totalCount={totalTasks}
           activeCount={activeTasks}
           completedCount={completedTasks}
         />
+
+        <TaskFilters
+          currentFilter={filter}
+          onFilterChange={setFilter}
+          totalCount={totalTasks}
+          activeCount={activeTasks}
+          completedCount={completedTasks}
+          onClearCompleted={handleClearCompleted}
+        />
+
         <TaskList
-          tasks={tasks}
+          tasks={filteredTasks}
           onToggle={handleToggleTask}
           onDelete={handleDeleteTask}
           onEdit={handleEditTask}
         />
       </main>
+
       <footer className="app-footer">
         <p><strong>TaskFlow</strong> &bull; Synent Technologies Web Development Internship Task 5</p>
-        <p>Developed with React &amp; Vite &bull; Client-side LocalStorage Persistence</p>
+        <p>Built with React &amp; Vite &bull; Persistent localStorage Productivity Dashboard</p>
       </footer>
     </div>
   );
