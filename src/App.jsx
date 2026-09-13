@@ -92,6 +92,8 @@ export default function App() {
 
         <TaskList
           tasks={filteredTasks}
+          currentFilter={filter}
+          totalTasks={totalTasks}
           onToggle={handleToggleTask}
           onDelete={handleDeleteTask}
           onEdit={handleEditTask}
